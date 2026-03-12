@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  sleep_dev_1:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Sleep for 10 seconds
+        run: sleep 10
+
+  echo_production:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Run echo command
+        run: echo "hello"
+
+  sleep_dev_2:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Sleep for 10 seconds
+        run: sleep 10
