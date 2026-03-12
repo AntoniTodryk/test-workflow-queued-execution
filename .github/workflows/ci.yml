@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +13,18 @@ concurrency:
 permissions: {}
 
 jobs:
+  wait-for-previous-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for older runs to finish
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          # Wait for previous runs instead of cancelling them
+          wait_for_previous_runs: true
+          # Don't cancel other runs in the queue
+          cancel_others: false
   sleep_dev_1:
+    needs: wait-for-previous-runs
     runs-on: ubuntu-latest
     environment: dev
     steps:
