@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  queue-manager:
+  queue-monitor:
     environment: dev
     runs-on: ubuntu-latest
     steps:
@@ -21,26 +21,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WORKFLOW_ID: ${{ github.workflow }}
           CURRENT_RUN_ID: ${{ github.run_id }}
+          SECONDS_BETWEEN_CHECKS: 5
         run: |
           echo "Waiting for previous runs of $WORKFLOW_ID to complete..."
           while true; do
-            # Fetch runs for this workflow that are currently in-progress or queued or waiting
-            # and get their run IDs.
+            # Fetch runs for this workflow that are currently in-progress, queued or waiting and get their run IDs.
             ACTIVE_RUNS=$(gh run list --workflow "$WORKFLOW_ID" --branch main --json databaseId,status --jq '.[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting") | .databaseId')
             
             # Find the oldest active run
             OLDEST_RUN=$(echo "$ACTIVE_RUNS" | sort -n | head -n 1)
             
             if [ -z "$OLDEST_RUN" ] || [ "$OLDEST_RUN" == "$CURRENT_RUN_ID" ]; then
-              echo "It is our turn! Proceeding..."
+              echo "The queue is clear. Starting the workflow..."
               break
             else
-              echo "Older run ($OLDEST_RUN) is still processing. Sleeping for 30s..."
-              sleep 5
+              echo "Older run (${{ github.server_url }}/${{ github.repository }}/actions/runs/$OLDEST_RUN) is still processing. Waiting for $SECONDS_BETWEEN_CHECKS seconds..."
+              sleep $SECONDS_BETWEEN_CHECKS
             fi
           done
   sleep_dev_1:
-    needs: queue-manager
+    needs: queue-monitor
     runs-on: ubuntu-latest
     environment: dev
     steps:
