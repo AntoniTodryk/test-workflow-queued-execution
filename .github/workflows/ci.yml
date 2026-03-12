@@ -24,9 +24,9 @@ jobs:
         run: |
           echo "Waiting for previous runs of $WORKFLOW_ID to complete..."
           while true; do
-            # Fetch runs for this workflow that are currently in-progress or queued
+            # Fetch runs for this workflow that are currently in-progress or queued or waiting
             # and get their run IDs.
-            ACTIVE_RUNS=$(gh run list --workflow "$WORKFLOW_ID" --branch main --json databaseId,status --jq '.[] | select(.status == "in_progress" or .status == "queued") | .databaseId')
+            ACTIVE_RUNS=$(gh run list --workflow "$WORKFLOW_ID" --branch main --json databaseId,status --jq '.[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting") | .databaseId')
             
             # Find the oldest active run
             OLDEST_RUN=$(echo "$ACTIVE_RUNS" | sort -n | head -n 1)
