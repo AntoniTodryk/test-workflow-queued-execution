@@ -20,6 +20,7 @@ jobs:
         run: sleep 10
 
   echo_production:
+    needs: sleep_dev_1
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -27,6 +28,7 @@ jobs:
         run: echo "hello"
 
   sleep_dev_2:
+    needs: echo_production
     runs-on: ubuntu-latest
     environment: dev
     steps:
