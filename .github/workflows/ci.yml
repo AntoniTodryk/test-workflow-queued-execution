@@ -6,10 +6,13 @@ on:
       - main
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
   queue-manager:
+    environment: dev
     runs-on: ubuntu-latest
     steps:
       - name: Wait for previous workflow runs
