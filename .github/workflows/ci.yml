@@ -9,18 +9,34 @@ on:
 permissions: {}
 
 jobs:
-  wait-for-previous-runs:
+  queue-manager:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for older runs to finish
-        uses: fkirc/skip-duplicate-actions@v5
-        with:
-          # Wait for previous runs instead of cancelling them
-          wait_for_previous_runs: true
-          # Don't cancel other runs in the queue
-          cancel_others: false
+      - name: Wait for previous workflow runs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_ID: ${{ github.workflow }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Waiting for previous runs of $WORKFLOW_ID to complete..."
+          while true; do
+            # Fetch runs for this workflow that are currently in-progress or queued
+            # and get their run IDs.
+            ACTIVE_RUNS=$(gh run list --workflow "$WORKFLOW_ID" --branch main --json databaseId,status --jq '.[] | select(.status == "in_progress" or .status == "queued") | .databaseId')
+            
+            # Find the oldest active run
+            OLDEST_RUN=$(echo "$ACTIVE_RUNS" | sort -n | head -n 1)
+            
+            if [ -z "$OLDEST_RUN" ] || [ "$OLDEST_RUN" == "$CURRENT_RUN_ID" ]; then
+              echo "It is our turn! Proceeding..."
+              break
+            else
+              echo "Older run ($OLDEST_RUN) is still processing. Sleeping for 30s..."
+              sleep 5
+            fi
+          done
   sleep_dev_1:
-    needs: wait-for-previous-runs
+    needs: queue-manager
     runs-on: ubuntu-latest
     environment: dev
     steps:
